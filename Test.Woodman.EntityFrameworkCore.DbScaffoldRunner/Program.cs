@@ -10,7 +10,8 @@ namespace Test.Woodman.EntityFrameworkCore.DbScaffoldRunner
         public static void Main(string[] args)
         {
             IConfiguration config = null;
-            var rebuildSchema = false;
+            var runScripts = false;
+            var runCommands = false;
 
             Try(() =>
             {
@@ -19,10 +20,11 @@ namespace Test.Woodman.EntityFrameworkCore.DbScaffoldRunner
                     .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
                     .Build();
 
-                rebuildSchema = bool.Parse(config["rebuildSchema"]);
+                runScripts = bool.Parse(config["runScripts"]);
+                runCommands = bool.Parse(config["runCommands"]);
             }, "Load Config");
 
-            if (rebuildSchema)
+            if (runScripts)
             {
                 Try(() =>
                 {
@@ -36,23 +38,30 @@ namespace Test.Woodman.EntityFrameworkCore.DbScaffoldRunner
             }
             else
             {
-                Console.WriteLine("AppSettings.RebuildSchema set to false.");
+                Console.WriteLine($"{nameof(runScripts)} set to false.");
             }
 
-            Try(() =>
+            if (runCommands)
             {
-                var path = Path.Combine(Directory.GetCurrentDirectory(), config["commands:sql"]);
+                Try(() =>
+                {
+                    var path = Path.Combine(Directory.GetCurrentDirectory(), config["commands:sql"]);
 
-                RunBatchFile(path);
+                    RunBatchFile(path);
 
-            }, "SQL Scaffold");
+                }, "SQL Scaffold");
 
-            Try(() =>
+                Try(() =>
+                {
+                    var path = Path.Combine(Directory.GetCurrentDirectory(), config["commands:npgsql"]);
+
+                    RunBatchFile(path);
+                }, "NpgSql Scaffold");
+            }
+            else
             {
-                var path = Path.Combine(Directory.GetCurrentDirectory(), config["commands:npgsql"]);
-
-                RunBatchFile(path);
-            }, "NpgSql Scaffold");
+                Console.WriteLine($"{nameof(runCommands)} set to false.");
+            }
         }
 
         private static void RunBatchFile(string path)

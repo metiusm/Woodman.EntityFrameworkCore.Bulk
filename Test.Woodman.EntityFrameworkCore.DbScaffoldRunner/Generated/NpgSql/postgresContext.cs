@@ -20,6 +20,8 @@ namespace Test.Woodman.EntityFrameworkCore.DbScaffoldRunner.Generated.NpgSql
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.HasPostgresExtension("adminpack");
+
             modelBuilder.Entity<Efcoretest>(entity =>
             {
                 entity.ToTable("efcoretest");
@@ -71,8 +73,6 @@ namespace Test.Woodman.EntityFrameworkCore.DbScaffoldRunner.Generated.NpgSql
             modelBuilder.HasSequence("id_seq");
 
             modelBuilder.HasSequence("id_seq_child");
-
-            modelBuilder.HasSequence("id_seq_next");
         }
     }
 }
