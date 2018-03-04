@@ -10,7 +10,7 @@ namespace Microsoft.EntityFrameworkCore
     {
         public SqlServerBulkExecutor(DbContext dbContext) : base(dbContext) { }
 
-        public IQueryable<TEntity> Join(IQueryable<TEntity> queryable, List<object[]> keys, char delimiter)
+        public IQueryable<TEntity> Join(IQueryable<TEntity> queryable, List<object[]> keys)
         {
             ValidateCompositeKeys(keys);
 
@@ -24,6 +24,29 @@ namespace Microsoft.EntityFrameworkCore
                 FROM dbo.{TableName} a
                 JOIN @Keys k ON {string.Join(@"
                     AND", PrimaryKey.Keys.Select(k => $@" a.{k.ColumnName} = k.{k.ColumnName}"))}";
+
+            return queryable.FromSql(sql);
+        }
+
+        public IQueryable<TEntity> Join(IQueryable<TEntity> queryable, PropertyFilter<TEntity>[] propertySelectors)
+        {
+            var eProps = propertySelectors.Select(s => new
+            {
+                EntityType.FindProperty(s.Property).Relational().ColumnName,
+                EntityType.FindProperty(s.Property).Relational().ColumnType,
+                s.Values
+            }).ToList();
+
+            var sql = $@"
+                {string.Join(@"
+                ", eProps.Select(p => $"DECLARE @{p.ColumnName} TABLE ({p.ColumnName} {p.ColumnType} NULL)"))}
+
+                {string.Join(@"
+                ", eProps.Select(p => $"INSERT INTO @{p.ColumnName} VALUES {string.Join(",", p.Values.Select(val => $"({StringifyKeyVal(val)})"))}"))}
+
+                SELECT a.*
+                FROM dbo.{TableName} a {string.Join(@"
+                    ", eProps.Select(p => $"JOIN @{p.ColumnName} alias_{p.ColumnName} ON alias_{p.ColumnName}.{p.ColumnName} = a.{p.ColumnName}"))}";
 
             return queryable.FromSql(sql);
         }

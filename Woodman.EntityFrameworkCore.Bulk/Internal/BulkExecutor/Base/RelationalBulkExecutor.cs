@@ -106,7 +106,7 @@ namespace Microsoft.EntityFrameworkCore
                 return "NULL";
             }
 
-            return value.ToString().Replace("'", "''");
+            return $"'{value.ToString().Replace("'", "''")}'";
         }
 
         private static bool GetHasActionColumn(DbDataReader reader)

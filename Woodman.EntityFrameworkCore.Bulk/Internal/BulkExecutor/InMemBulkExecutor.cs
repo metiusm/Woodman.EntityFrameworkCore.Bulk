@@ -9,7 +9,7 @@ namespace Microsoft.EntityFrameworkCore
     {
         public InMemBulkExecutor(DbContext dbContext) : base(dbContext){ }
 
-        public IQueryable<TEntity> Join(IQueryable<TEntity> queryable, List<object[]> keys, char delimiter)
+        public IQueryable<TEntity> Join(IQueryable<TEntity> queryable, List<object[]> keys)
         {
             ValidateCompositeKeys(keys);
 
@@ -25,6 +25,11 @@ namespace Microsoft.EntityFrameworkCore
 
                 return queryable.Where(entity => primKeys.Contains(GetPrimaryKey(entity).ToString()));
             }
+        }
+
+        public IQueryable<TEntity> Join(IQueryable<TEntity> queryable, PropertyFilter<TEntity>[] propertySelectors)
+        {
+            return queryable.Where(e => propertySelectors.All(p => p.Values.Contains(p.Property.GetValue(e))));
         }
 
         public async Task<int> BulkRemoveAsync(IQueryable<TEntity> queryable, bool filterKeys, List<object[]> keys)
