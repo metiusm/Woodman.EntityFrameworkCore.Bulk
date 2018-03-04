@@ -9,8 +9,10 @@ namespace Microsoft.EntityFrameworkCore
     {
         public InMemBulkExecutor(DbContext dbContext) : base(dbContext){ }
 
-        public IQueryable<TEntity> Join(IQueryable<TEntity> queryable, IEnumerable<object[]> keys, char delimiter)
+        public IQueryable<TEntity> Join(IQueryable<TEntity> queryable, List<object[]> keys, char delimiter)
         {
+            ValidateCompositeKeys(keys);
+
             if (PrimaryKey.IsCompositeKey)
             {
                 var primKeys = keys.ToList();
@@ -27,6 +29,8 @@ namespace Microsoft.EntityFrameworkCore
 
         public async Task<int> BulkRemoveAsync(IQueryable<TEntity> queryable, bool filterKeys, List<object[]> keys)
         {
+            ValidateCompositeKeys(keys);
+
             if (filterKeys)
             {
                 if (PrimaryKey.IsCompositeKey)
@@ -84,6 +88,8 @@ namespace Microsoft.EntityFrameworkCore
 
         public async Task<int> BulkUpdateAsync(IQueryable<TEntity> queryable, List<object[]> keys, List<string> updateProperties, Func<object[], TEntity> updateFunc)
         {
+            ValidateCompositeKeys(keys);
+
             List<TEntity> entities;
 
             if (PrimaryKey.IsCompositeKey)

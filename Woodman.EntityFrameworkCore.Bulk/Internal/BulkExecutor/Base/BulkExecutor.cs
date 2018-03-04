@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore.Metadata;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -45,6 +46,45 @@ namespace Microsoft.EntityFrameworkCore
             }
 
             return PrimaryKey.Keys.Select(k => k.Property.GetValue(entity)).ToArray();
+        }
+
+        protected void ValidateCompositeKeys(List<object[]> keys)
+        {
+            if (!PrimaryKey.IsCompositeKey || keys == null || keys.Count == 0)
+            {
+                return;
+            }
+
+            var numExpected = PrimaryKey.Keys.Count;
+
+            for (var i = 0; i < keys.Count; i++)
+            {
+                var key = keys[i];
+
+                if (key == null || key.Length != numExpected)
+                {
+                    throw new ArgumentException($"Invalid Composite Key (index:{i}). Expected length of {numExpected}.");
+                }
+
+                for (var j = 0; j < key.Length; j++)
+                {
+                    var expected = PrimaryKey.Keys[j];
+                    var actual = key[j];
+
+                    if (actual == null)
+                    {
+                        throw new ArgumentException($"Invalid Composite Key (index:{i}:{j}). Value cannot be null.");
+                    }
+
+                    var actualType = actual.GetType();
+
+                    if (actualType != expected.Property.PropertyType)
+                    {
+                        throw new ArgumentException($"Invalid Composite Key (index:{i}:{j}). " +
+                            $"Expected type {expected.Property.PropertyType.Name} for Property {expected.Property.Name} but found type: {actualType.Name}.");
+                    }
+                }
+            }
         }
 
         protected void SetPrimaryKey(TEntity entity, object keyVal)

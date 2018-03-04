@@ -7,7 +7,7 @@ namespace Microsoft.EntityFrameworkCore
 {
     internal interface IBulkExecutor<TEntity> where TEntity : class
     {
-        IQueryable<TEntity> Join(IQueryable<TEntity> queryable, IEnumerable<object[]> keys, char delimiter);
+        IQueryable<TEntity> Join(IQueryable<TEntity> queryable, List<object[]> keys, char delimiter);
 
         Task<int> BulkRemoveAsync(IQueryable<TEntity> queryable, bool hasKeys, List<object[]> keys);
 

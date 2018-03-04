@@ -10,8 +10,10 @@ namespace Microsoft.EntityFrameworkCore
     {
         public NpgSqlBulkExecutor(DbContext dbContext) : base(dbContext) { }
 
-        public IQueryable<TEntity> Join(IQueryable<TEntity> queryable, IEnumerable<object[]> keys, char delimiter)
+        public IQueryable<TEntity> Join(IQueryable<TEntity> queryable, List<object[]> keys, char delimiter)
         {
+            ValidateCompositeKeys(keys);
+
             var sql = $@"
                 CREATE TEMP TABLE _Keys ({string.Join(", ", PrimaryKey.Keys.Select(k => $"{k.ColumnName} {k.ColumnType}"))});
 
@@ -28,6 +30,8 @@ namespace Microsoft.EntityFrameworkCore
 
         public async Task<int> BulkRemoveAsync(IQueryable<TEntity> queryable, bool filterKeys, List<object[]> keys)
         {
+            ValidateCompositeKeys(keys);
+
             var alias = $"d_{TableName}";
             var qryAlias = $"q_{TableName}";
             var kAlias = $"k_{TableName}";
@@ -139,6 +143,8 @@ namespace Microsoft.EntityFrameworkCore
 
         public async Task<int> BulkUpdateAsync(IQueryable<TEntity> queryable, List<object[]> keys, List<string> updateProperties, Func<object[], TEntity> updateFunc)
         {
+            ValidateCompositeKeys(keys);
+
             var alias = $"u_{TableName}";
             var qryAlias = $"q_{TableName}";
             var deltaAlias = $"d_{TableName}";
